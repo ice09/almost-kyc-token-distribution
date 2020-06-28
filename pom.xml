@@ -132,4 +132,11 @@
 		</plugins>
 	</build>
 
+	<distributionManagement>
+		<repository>
+			<id>github</id>
+			<name>Almost KYC for fair Distribution of Token.</name>
+			<url>https://maven.pkg.github.com/ice09/almost-kyc-token-distribution</url>
+		</repository>
+	</distributionManagement>
 </project>
