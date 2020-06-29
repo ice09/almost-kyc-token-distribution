@@ -1,8 +1,5 @@
 package tech.blockchainers.akyc.rest;
 
-import tech.blockchainers.akyc.CredentialsUtil;
-import tech.blockchainers.akyc.TokenProspectRegistry;
-import tech.blockchainers.akyc.service.SignatureService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -13,6 +10,9 @@ import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.gas.DefaultGasProvider;
 import org.web3j.tx.gas.StaticGasProvider;
 import org.web3j.utils.Numeric;
+import tech.blockchainers.akyc.CredentialsUtil;
+import tech.blockchainers.akyc.TokenProspectRegistry;
+import tech.blockchainers.akyc.service.SignatureService;
 
 import javax.annotation.PostConstruct;
 
@@ -58,5 +58,9 @@ public class Controller {
         TokenProspectRegistry registry = TokenProspectRegistry.load(registryAddress, httpWeb3, signer, new StaticGasProvider(DefaultGasProvider.GAS_PRICE, DefaultGasProvider.GAS_LIMIT));
         registry.registerProspect(Numeric.hexStringToByteArray(signature)).send();
         return signatureDto;
+    }
+
+    public void setRegistryAddress(String registryAddress) {
+        this.registryAddress = registryAddress;
     }
 }

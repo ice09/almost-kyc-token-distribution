@@ -1,5 +1,7 @@
 package tech.blockchainers.akyc;
 
+import org.springframework.util.StringUtils;
+import tech.blockchainers.akyc.rest.Controller;
 import tech.blockchainers.akyc.scheduler.AuditTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,10 +17,7 @@ import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.gas.DefaultGasProvider;
 import org.web3j.tx.gas.StaticGasProvider;
 
-import java.io.IOException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
+import java.math.BigInteger;
 
 @SpringBootApplication
 @Slf4j
@@ -39,9 +38,11 @@ public class Application implements CommandLineRunner {
 
 	private final AuditTask auditTask;
 	private Credentials credentials;
+	private final Controller controller;
 
-	public Application(AuditTask auditTask) {
+	public Application(AuditTask auditTask, Controller controller) {
 		this.auditTask = auditTask;
+		this.controller = controller;
 	}
 
 	public static void main(String[] args) {
@@ -50,19 +51,27 @@ public class Application implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		//String privateKey1 = "4CF4863EDE071AE98D932B0F91695C92F0FB970C7E4587A5801E78E93E59128C" // has the YST tokens!
-		//String privateKey1 = "D0FACAF2F1D51A1A994432B5A6080FC1449598D43255A05D20CC07C7C7857094";
-		//String privateKey = "710404145a788a5f2b7b6678f894a8ba621bdf8f4c04b44a3f703159916d39df"; // Ganache 1.
 		this.credentials = CredentialsUtil.createFromPrivateKey(privateKeyDeployer);
 		log.info("Key-Derived Ethereum address: " + credentials.getAddress());
 		connectToLocalBlockchain();
 	}
 
-	private void connectToLocalBlockchain() throws IOException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException {
+	private void connectToLocalBlockchain() throws Exception {
 		//httpWeb3 = Web3j.build(new HttpService("https://rinkeby.infura.io/v3/b9498984bbf8462e9bc192f7679b6a75", createOkHttpClient()));
 		Web3j httpWeb3 = Web3j.build(new HttpService(rpcUrl));
 		auditTask.setWeb3(httpWeb3);
-		TokenProspectRegistry registry = TokenProspectRegistry.load(registryAddress, httpWeb3, credentials, new StaticGasProvider(DefaultGasProvider.GAS_PRICE, DefaultGasProvider.GAS_LIMIT));
+		TokenProspectRegistry registry;
+		if (StringUtils.isEmpty(registryAddress)) {
+			registry = TokenProspectRegistry.deploy(httpWeb3, credentials, new StaticGasProvider(DefaultGasProvider.GAS_PRICE, DefaultGasProvider.GAS_LIMIT)).send();
+			controller.setRegistryAddress(registry.getContractAddress());
+		} else {
+			registry = TokenProspectRegistry.load(registryAddress, httpWeb3, credentials, new StaticGasProvider(DefaultGasProvider.GAS_PRICE, DefaultGasProvider.GAS_LIMIT));
+		}
+		if (StringUtils.isEmpty(tokenAddress)) {
+			UnlimitedCurrencyToken uct = UnlimitedCurrencyToken.deploy(httpWeb3, credentials, new StaticGasProvider(DefaultGasProvider.GAS_PRICE, DefaultGasProvider.GAS_LIMIT), "YST", "2").send();
+			uct.mintToken(credentials.getAddress(), BigInteger.valueOf(10000)).send();
+			tokenAddress = uct.getContractAddress();
+		}
 		ERC20 token = ERC20.load(tokenAddress, httpWeb3, credentials, new StaticGasProvider(DefaultGasProvider.GAS_PRICE, DefaultGasProvider.GAS_LIMIT));
 		auditTask.initTokenProspectRegistry(registry, token);
 	}
