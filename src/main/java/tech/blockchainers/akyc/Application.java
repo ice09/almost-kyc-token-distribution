@@ -33,6 +33,9 @@ public class Application implements CommandLineRunner {
 	@Value("${rpc.url}")
 	private String rpcUrl;
 
+	@Value("${check.claims}")
+	private boolean checkClaims;
+
 	@Value("${private.key.deployer}")
 	private String privateKeyDeployer;
 
@@ -64,6 +67,7 @@ public class Application implements CommandLineRunner {
 		if (StringUtils.isEmpty(registryAddress)) {
 			registry = TokenProspectRegistry.deploy(httpWeb3, credentials, new StaticGasProvider(DefaultGasProvider.GAS_PRICE, DefaultGasProvider.GAS_LIMIT)).send();
 			controller.setRegistryAddress(registry.getContractAddress());
+			log.info("Deployed TokenPropectRegistry Contract: " + registry.getContractAddress());
 		} else {
 			registry = TokenProspectRegistry.load(registryAddress, httpWeb3, credentials, new StaticGasProvider(DefaultGasProvider.GAS_PRICE, DefaultGasProvider.GAS_LIMIT));
 		}
@@ -71,9 +75,10 @@ public class Application implements CommandLineRunner {
 			UnlimitedCurrencyToken uct = UnlimitedCurrencyToken.deploy(httpWeb3, credentials, new StaticGasProvider(DefaultGasProvider.GAS_PRICE, DefaultGasProvider.GAS_LIMIT), "YST", "2").send();
 			uct.mintToken(credentials.getAddress(), BigInteger.valueOf(10000)).send();
 			tokenAddress = uct.getContractAddress();
+			log.info("Deployed ERC20-UnlimitedCurrencyToken at " + tokenAddress + " and minted balance of " + uct.balanceOf(tokenAddress).send());
 		}
 		ERC20 token = ERC20.load(tokenAddress, httpWeb3, credentials, new StaticGasProvider(DefaultGasProvider.GAS_PRICE, DefaultGasProvider.GAS_LIMIT));
-		auditTask.initTokenProspectRegistry(registry, token);
+		auditTask.initTokenProspectRegistry(registry, token, checkClaims);
 	}
 
 }

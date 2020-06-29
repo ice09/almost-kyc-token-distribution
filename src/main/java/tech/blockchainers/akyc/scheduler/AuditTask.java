@@ -35,6 +35,8 @@ public class AuditTask {
     private ERC20 token;
 
     private String jsonUrl = "https://ipfs.3box.io/profile?address=";
+    private boolean checkClaims;
+    private BigInteger lastBlockNum = BigInteger.ZERO;
 
     @Scheduled(fixedRate = 10000)
     public void auditEvents() throws Exception {
@@ -42,14 +44,19 @@ public class AuditTask {
             return;
         }
         log.info("Auditing events.");
-        if (httpWeb3 == null) return;
         Request<?, EthLog> resReg = httpWeb3.ethGetLogs(filterReg);
         List<EthLog.LogResult> regLogs = resReg.send().getLogs();
         if (regLogs.size()>0) {
-            List<String> ethLogTopics = ((EthLog.LogObject) regLogs.get(regLogs.size() - 1)).get().getTopics();
-            String prospect = "0x" + ethLogTopics.get(1).substring(26);
-            List<String> registrations = readJsonFromUrl(prospect);
-            sendTokens(registrations);
+            org.web3j.protocol.core.methods.response.Log lastLogEntry = ((EthLog.LogObject) regLogs.get(regLogs.size() - 1)).get();
+            if (lastLogEntry.getBlockNumber().compareTo(lastBlockNum) > 0) {
+                List<String> ethLogTopics = lastLogEntry.getTopics();
+                String prospect = "0x" + ethLogTopics.get(1).substring(26);
+                List<String> registrations = readJsonFromUrl(prospect);
+                sendTokens(registrations);
+                lastBlockNum = lastLogEntry.getBlockNumber();
+            } else {
+                log.warning("Old Log Entries detected, skipping.");
+            }
         }
     }
 
@@ -71,7 +78,10 @@ public class AuditTask {
 
     private List<String> readJsonFromUrl(String prospect) throws IOException, URISyntaxException {
         List<String> registrations = new ArrayList<>();
-        registrations.add(prospect);
+        if (!checkClaims) {
+            registrations.add(prospect);
+            return registrations;
+        }
         try {
             String json = IOUtils.toString(new URI(jsonUrl + prospect), StandardCharsets.UTF_8);
             ObjectMapper objectMapper = new ObjectMapper();
@@ -95,9 +105,10 @@ public class AuditTask {
         this.httpWeb3 = httpWeb3;
     }
 
-    public void initTokenProspectRegistry(TokenProspectRegistry tokenProspectRegistry, ERC20 token) throws IOException {
+    public void initTokenProspectRegistry(TokenProspectRegistry tokenProspectRegistry, ERC20 token, boolean checkClaims) throws IOException {
         this.tokenProspectRegistry = tokenProspectRegistry;
         this.token = token;
+        this.checkClaims = checkClaims;
         //For historic search, adjust start block number: EthBlockNumber currentBlockNum = httpWeb3.ethBlockNumber().send();
         this.filterReg = new EthFilter(DefaultBlockParameterName.LATEST, DefaultBlockParameterName.LATEST, tokenProspectRegistry.getContractAddress());
         String encodedEventSignatureReg = EventEncoder.encode(TokenProspectRegistry.REGISTERED_EVENT);
