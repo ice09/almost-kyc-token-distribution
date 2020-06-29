@@ -60,7 +60,10 @@ public class Application implements CommandLineRunner {
 	}
 
 	private void connectToLocalBlockchain() throws Exception {
-		//httpWeb3 = Web3j.build(new HttpService("https://rinkeby.infura.io/v3/b9498984bbf8462e9bc192f7679b6a75", createOkHttpClient()));
+		if (StringUtils.isEmpty(rpcUrl)) {
+			log.error("No JSON RPC-URL set, only valid in I-Test.");
+			return;
+		}
 		Web3j httpWeb3 = Web3j.build(new HttpService(rpcUrl));
 		auditTask.setWeb3(httpWeb3);
 		TokenProspectRegistry registry;
