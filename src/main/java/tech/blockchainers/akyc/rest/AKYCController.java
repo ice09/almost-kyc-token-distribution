@@ -2,6 +2,7 @@ package tech.blockchainers.akyc.rest;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.web3j.crypto.Credentials;
@@ -17,7 +18,7 @@ import tech.blockchainers.akyc.service.SignatureService;
 import javax.annotation.PostConstruct;
 
 @RestController
-public class Controller {
+public class AKYCController {
 
     private Web3j httpWeb3;
     @Value("${rpc.url}")
@@ -33,13 +34,13 @@ public class Controller {
         this.httpWeb3 = Web3j.build(new HttpService(rpcUrl));
     }
 
-    @GetMapping("/createAccount")
+    @PostMapping("/createAccount")
     public AccountDto createAccount() throws Exception {
         Credentials signer = CredentialsUtil.create();
         return new AccountDto(Numeric.toHexStringWithPrefix(signer.getEcKeyPair().getPrivateKey()), signer.getAddress());
     }
 
-    @GetMapping("/sign")
+    @GetMapping("/signMessage")
     public SignatureDto signMessage(@RequestParam String privateKey) throws Exception {
         Credentials signer = CredentialsUtil.createFromPrivateKey(privateKey);
         SignatureService signatureService = new SignatureService(signer);
@@ -48,8 +49,8 @@ public class Controller {
         return new SignatureDto(Numeric.toHexStringWithPrefix(signer.getEcKeyPair().getPrivateKey()), signer.getAddress(), message, signature);
     }
 
-    @GetMapping("/signAndRegister")
-    public SignatureDto signMessageAndTransfer(@RequestParam String privateKey) throws Exception {
+    @PostMapping("/signMessageAndRegister")
+    public SignatureDto signMessageAndRegister(@RequestParam String privateKey) throws Exception {
         Credentials signer = CredentialsUtil.createFromPrivateKey(privateKey);
         SignatureService signatureService = new SignatureService(signer);
         String message = signatureMessage.replaceAll("#addr#", signer.getAddress().toLowerCase());

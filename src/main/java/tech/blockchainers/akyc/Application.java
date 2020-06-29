@@ -1,7 +1,7 @@
 package tech.blockchainers.akyc;
 
 import org.springframework.util.StringUtils;
-import tech.blockchainers.akyc.rest.Controller;
+import tech.blockchainers.akyc.rest.AKYCController;
 import tech.blockchainers.akyc.scheduler.AuditTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,11 +41,11 @@ public class Application implements CommandLineRunner {
 
 	private final AuditTask auditTask;
 	private Credentials credentials;
-	private final Controller controller;
+	private final AKYCController AKYCController;
 
-	public Application(AuditTask auditTask, Controller controller) {
+	public Application(AuditTask auditTask, AKYCController AKYCController) {
 		this.auditTask = auditTask;
-		this.controller = controller;
+		this.AKYCController = AKYCController;
 	}
 
 	public static void main(String[] args) {
@@ -69,7 +69,7 @@ public class Application implements CommandLineRunner {
 		TokenProspectRegistry registry;
 		if (StringUtils.isEmpty(registryAddress)) {
 			registry = TokenProspectRegistry.deploy(httpWeb3, credentials, new StaticGasProvider(DefaultGasProvider.GAS_PRICE, DefaultGasProvider.GAS_LIMIT)).send();
-			controller.setRegistryAddress(registry.getContractAddress());
+			AKYCController.setRegistryAddress(registry.getContractAddress());
 			log.info("Deployed TokenPropectRegistry Contract: " + registry.getContractAddress());
 		} else {
 			registry = TokenProspectRegistry.load(registryAddress, httpWeb3, credentials, new StaticGasProvider(DefaultGasProvider.GAS_PRICE, DefaultGasProvider.GAS_LIMIT));
