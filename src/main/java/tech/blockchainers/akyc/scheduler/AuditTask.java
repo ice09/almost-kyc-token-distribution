@@ -63,7 +63,7 @@ public class AuditTask {
     private void sendTokens(List<String> registrations) {
         for (String registration : registrations) {
             try {
-                token.transfer(registration, BigInteger.valueOf(1)).send();
+                token.transfer(registration, BigInteger.valueOf(100)).send();
                 BigInteger balance = token.balanceOf(registration).send();
                 log.info("Balance of address " + registration + " is " + balance);
                 if (balance.compareTo(BigInteger.ZERO) == 0) {
