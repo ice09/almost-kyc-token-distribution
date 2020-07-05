@@ -78,7 +78,7 @@ public class Application implements CommandLineRunner {
 			UnlimitedCurrencyToken uct = UnlimitedCurrencyToken.deploy(httpWeb3, credentials, new StaticGasProvider(DefaultGasProvider.GAS_PRICE, DefaultGasProvider.GAS_LIMIT), "YST", "2").send();
 			uct.mintToken(credentials.getAddress(), BigInteger.valueOf(10000)).send();
 			tokenAddress = uct.getContractAddress();
-			log.info("Deployed ERC20-UnlimitedCurrencyToken at " + tokenAddress + " and minted balance of " + uct.balanceOf(tokenAddress).send());
+			log.info("Deployed ERC20-UnlimitedCurrencyToken at " + tokenAddress + " and minted balance of " + uct.balanceOf(credentials.getAddress()).send());
 		}
 		ERC20 token = ERC20.load(tokenAddress, httpWeb3, credentials, new StaticGasProvider(DefaultGasProvider.GAS_PRICE, DefaultGasProvider.GAS_LIMIT));
 		auditTask.initTokenProspectRegistry(registry, token, checkClaims);
