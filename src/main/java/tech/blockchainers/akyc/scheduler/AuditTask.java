@@ -19,7 +19,6 @@ import tech.blockchainers.akyc.TokenProspectRegistry;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,7 +75,7 @@ public class AuditTask {
     }
 
 
-    private List<String> readJsonFromUrl(String prospect) throws IOException, URISyntaxException {
+    private List<String> readJsonFromUrl(String prospect) {
         List<String> registrations = new ArrayList<>();
         if (!checkClaims) {
             registrations.add(prospect);
