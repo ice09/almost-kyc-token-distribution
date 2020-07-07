@@ -1,5 +1,10 @@
 # almost-kyc-token-distribution
 
+This project implements an Almost KYC Airdrop PoC, including
+
+* 3Box usage for verification of Github and Twitter Claims
+* Smart Contract interactions and event subscriptions with Java
+
 ## Running the Token Distribution Example on Rinkeby
 
 There are two scenarios for running the Token Distribution Example:
